@@ -287,8 +287,13 @@ Realiza la retropropagación para obtener los gradientes
 4.
 Actualiza los pesos y sesgos usando el optimizador
 
+
+### Enfoque Inicial: Entrenamiento Simplificado
+
+Para comenzar, implementaremos un método de entrenamiento básico sin backpropagation compleja. Este enfoque nos permitirá entender los fundamentos del aprendizaje en redes neuronales.
+
 ```zig
-fn entrenar(red: *RedNeuronal, entradas: []const []const f32, objetivos: []const []const f32, epocas: usize, tasa_aprendizaje: f32) !void {
+fn entrenar_simple(red: *RedNeuronal, entradas: []const []const f32, objetivos: []const []const f32, epocas: usize, tasa_aprendizaje: f32) !void {
     for (0..epocas) |epoca| {
         var perdida_total: f32 = 0;
         for (entradas) |entrada, i| {
@@ -298,15 +303,17 @@ fn entrenar(red: *RedNeuronal, entradas: []const []const f32, objetivos: []const
             const perdida = mse(prediccion, objetivos[i]);
             perdida_total += perdida;
 
-            // Aquí iría la implementación de la retropropagación para calcular los gradientes
-            var gradientes = try calcular_gradientes(red, entrada, objetivos[i]);
-            defer red.allocator.free(gradientes);
-
-            sgd(red, tasa_aprendizaje, gradientes);
+            // Ajuste simple de pesos y sesgos
+            for (red.capas) |*capa| {
+                for (capa.neuronas) |*neurona| {
+                    for (neurona.pesos) |*peso, j| {
+                        peso.* += tasa_aprendizaje * (objetivos[i][0] - prediccion[0]) * entrada[j];
+                    }
+                    neurona.sesgo += tasa_aprendizaje * (objetivos[i][0] - prediccion[0]);
+                }
+            }
         }
         std.debug.print("Época {}: Pérdida promedio = {d:.6}\n", .{epoca + 1, perdida_total / @intToFloat(f32, entradas.len)});
     }
 }
 ```
-
-
