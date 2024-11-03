@@ -1,4 +1,8 @@
 const std = @import("std");
+const main = @import("src/main.zig");
+
+const Neurona = main.Neurona;
+const sigmoid = main.sigmoid;
 
 test "Neurona initialization" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);

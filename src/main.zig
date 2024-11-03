@@ -28,10 +28,16 @@ fn sigmoid(x: f32) f32 {
 // Capa (Layer) structure
 const Capa = struct {
     neuronas: []Neurona,
-    funcion_activacion: fn (f32) f32,
+    funcion_activacion: *const fn (f32) f32,
     allocator: std.mem.Allocator,
 
-    pub fn init(allocator: std.mem.Allocator, num_neuronas: usize, num_entradas: usize, funcion_activacion: fn (f32) f32) !Capa {
+    pub fn init(
+            allocator: std.mem.Allocator
+            , num_neuronas: usize
+            , num_entradas: usize
+            , funcion_activacion: *const fn (f32) f32
+        ) !Capa {
+        
         const neuronas = try allocator.alloc(Neurona, num_neuronas);
         errdefer allocator.free(neuronas);
 
@@ -97,7 +103,7 @@ pub fn main() !void {
     std.debug.print("Salida de la neurona: {d:.4}\n", .{salida});
 
     // Create a sample layer
-    var capa = try Capa.init(allocator, 2, 3, sigmoid);
+    var capa = try Capa.init(allocator, 2, 3, &sigmoid);
     defer capa.deinit();
 
     std.debug.print("Capa creada con éxito\n", .{});
@@ -127,4 +133,38 @@ test "Neurona initialization" {
 test "Sigmoid function" {
     const result = sigmoid(0);
     try std.testing.expectApproxEqAbs(@as(f32, 0.5), result, 0.0001);
+}
+
+test "Capa initialization and deinitialization" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const num_neuronas: usize = 2;
+    const num_entradas: usize = 3;
+
+    var capa = try Capa.init(allocator, num_neuronas, num_entradas, &sigmoid);
+    defer capa.deinit();
+
+    // Check layer properties
+    try std.testing.expectEqual(capa.neuronas.len, num_neuronas);
+    try std.testing.expectEqual(capa.funcion_activacion, &sigmoid);
+
+    // Check each neuron in the layer
+    for (capa.neuronas) |neurona| {
+        try std.testing.expectEqual(neurona.pesos.len, num_entradas);
+        try std.testing.expectEqual(neurona.sesgo, 0);
+
+        // Check that weights are initialized (they should not all be zero)
+        var all_zero = true;
+        for (neurona.pesos) |peso| {
+            if (peso != 0) {
+                all_zero = false;
+                break;
+            }
+        }
+        try std.testing.expect(!all_zero);
+    }
+
+    // The deinitialization will be called by the defer statement
 }
