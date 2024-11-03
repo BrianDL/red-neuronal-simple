@@ -1,3 +1,8 @@
 .zig-cache/
 zig-out/
 .envrc
+zig-cache/
+zig-out/
+docs/report/*.aux
+docs/report/*.log
+docs/report/*.pdf
