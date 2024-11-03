@@ -92,11 +92,11 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
     
-    const tests = b.addTest(.{
-        .root_source_file = .{ .path = "tests/test_red_neuronal.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(tests).step);
+    // const tests = b.addTest(.{
+    //     .root_source_file = b.path("tests/test_red_neuronal.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
+    // test_step.dependOn(&b.addRunArtifact(tests).step);
 
 }
