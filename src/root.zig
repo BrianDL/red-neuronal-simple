@@ -74,6 +74,30 @@ const RedNeuronal = struct {
 
         return final_output;
     }
+
+    pub fn entrenar_simple(self: *RedNeuronal, entradas: []const []const f32, objetivos: []const []const f32, epocas: usize, tasa_aprendizaje: f32) !void {
+        for (0..epocas) |epoca| {
+            var perdida_total: f32 = 0;
+            for (entradas, objetivos) |entrada, objetivo| {
+                const prediccion = try self.propagar_adelante(entrada);
+                defer self.allocator.free(prediccion);
+
+                const perdida = mse(prediccion, objetivo);
+                perdida_total += perdida;
+
+                // Ajuste simple de pesos y sesgos
+                for (self.capas) |*capa| {
+                    for (capa.neuronas) |*neurona| {
+                        for (neurona.pesos, 0..) |*peso, j| {
+                            peso.* += tasa_aprendizaje * (objetivo[0] - prediccion[0]) * entrada[j];
+                        }
+                        neurona.sesgo += tasa_aprendizaje * (objetivo[0] - prediccion[0]);
+                    }
+                }
+            }
+            std.debug.print("Época {}: Pérdida promedio = {d:.6}\n", .{ epoca + 1, perdida_total / @intToFloat(f32, entradas.len) });
+        }
+    }
 };
 
 // Weighted sum function
