@@ -201,3 +201,51 @@ test "RedNeuronal initialization and forward propagation" {
     try std.testing.expect(salida[0] > 0 and salida[0] < 1);
     try std.testing.expectApproxEqAbs(@as(f32, 0.657010), salida[0], 0.000001);
 }
+
+test "Simple training of RedNeuronal" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const configuracion = [_]usize{ 2, 1 };
+    const funciones_activacion = [_]*const fn (f32) f32{sigmoid};
+
+    var red = try RedNeuronal.init(allocator, &configuracion, &funciones_activacion, WeightInitStrategy.UniformRandom, null);
+    defer red.deinit();
+
+    const entradas_raw = [_][2]f32{
+        .{ 0, 0 },
+        .{ 0, 1 },
+        .{ 1, 0 },
+        .{ 1, 1 },
+    };
+    const objetivos_raw = [_][1]f32{
+        .{0},
+        .{1},
+        .{1},
+        .{0},
+    };
+
+    // Convert arrays to slices
+    var entradas = try allocator.alloc([]const f32, entradas_raw.len);
+    defer allocator.free(entradas);
+    for (entradas_raw, 0..) |entrada, i| {
+        entradas[i] = &entrada;
+    }
+
+    var objetivos = try allocator.alloc([]const f32, objetivos_raw.len);
+    defer allocator.free(objetivos);
+    for (objetivos_raw, 0..) |objetivo, i| {
+        objetivos[i] = &objetivo;
+    }
+
+    try red.entrenar_simple(entradas, objetivos, 1000, 0.1);
+
+    // Test the trained network
+    for (entradas, objetivos) |entrada, objetivo| {
+        const salida = try red.propagar_adelante(entrada);
+        defer allocator.free(salida);
+        std.debug.print("Input: {any}, Output: {d:.4}, Target: {d}\n", .{ entrada, salida[0], objetivo[0] });
+        try std.testing.expectApproxEqAbs(objetivo[0], salida[0], 0.1);
+    }
+}
