@@ -48,12 +48,16 @@ pub const Capa = struct {
 pub const WeightInitStrategy = enum {
     Constant,
     UniformRandom,
-    // Xavier,
 };
 
 // Activation function: Sigmoid
 pub fn sigmoid(x: f32) f32 {
     return 1.0 / (1.0 + std.math.exp(-x));
+}
+
+// Activation function: Linear
+pub fn linear(x: f32) f32 {
+    return x;
 }
 
 /////////////////  START UNIT TESTING
@@ -63,6 +67,12 @@ test "Sigmoid function" {
     try std.testing.expectApproxEqAbs(@as(f32, 0.5), result, 0.0001);
 }
 
+test "Linear function" {
+    try std.testing.expectEqual(@as(f32, -1.0), linear(-1.0));
+    try std.testing.expectEqual(@as(f32, 0.0), linear(0.0));
+    try std.testing.expectEqual(@as(f32, 1.0), linear(1.0));
+    try std.testing.expectEqual(@as(f32, 100.0), linear(100.0));
+}
 test "Capa initialization and deinitialization" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -71,7 +81,7 @@ test "Capa initialization and deinitialization" {
     const num_neuronas: usize = 2;
     const num_entradas: usize = 3;
 
-    // Test Constant initialization
+    // Test Constant initialization with sigmoid
     {
         var capa = try Capa.init(allocator, num_neuronas, num_entradas, &sigmoid, WeightInitStrategy.Constant, null);
         defer capa.deinit();
@@ -90,10 +100,9 @@ test "Capa initialization and deinitialization" {
         }
     }
 
-    // Test UniformRandom initialization
+    // Test UniformRandom initialization with sigmoid
     {
-        var capa = try Capa.init(allocator, num_neuronas, num_entradas, &sigmoid, WeightInitStrategy.UniformRandom, 1234 // Use a fixed seed for reproducibility
-        );
+        var capa = try Capa.init(allocator, num_neuronas, num_entradas, &sigmoid, WeightInitStrategy.UniformRandom, 1234);
         defer capa.deinit();
 
         try std.testing.expectEqual(capa.neuronas.len, num_neuronas);
@@ -114,6 +123,25 @@ test "Capa initialization and deinitialization" {
                 try std.testing.expect(peso >= 0 and peso < 1);
             }
             try std.testing.expect(!all_same);
+        }
+    }
+
+    // Test Constant initialization with linear activation
+    {
+        var capa = try Capa.init(allocator, num_neuronas, num_entradas, &linear, WeightInitStrategy.Constant, null);
+        defer capa.deinit();
+
+        try std.testing.expectEqual(capa.neuronas.len, num_neuronas);
+        try std.testing.expectEqual(capa.funcion_activacion, &linear);
+        try std.testing.expectEqual(capa.strat_inicia_pesos, WeightInitStrategy.Constant);
+
+        for (capa.neuronas) |neurona| {
+            try std.testing.expectEqual(neurona.pesos.len, num_entradas);
+            try std.testing.expectEqual(neurona.sesgo, 0);
+
+            for (neurona.pesos) |peso| {
+                try std.testing.expectApproxEqAbs(@as(f32, 0.5), peso, 0.0001);
+            }
         }
     }
 }
