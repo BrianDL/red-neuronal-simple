@@ -236,7 +236,7 @@ Para entrenar nuestra red neuronal, necesitamos implementar los siguientes compo
 3. Optimizador (Optimizer)
 4. Bucle de entrenamiento (Training loop)
 
-### 1. Función de pérdida
+### Función de pérdida
 
 La función de pérdida mide qué tan bien está funcionando nuestra red neuronal. Para una tarea de regresión simple, podemos usar el Error Cuadrático Medio (Mean Squared Error, MSE):
 
@@ -256,6 +256,9 @@ fn mse(predicciones: []const f32, objetivos: []const f32) f32 {
 
 ### Retropropagación
 La retropropagación es el algoritmo que calcula los gradientes de la función de pérdida con respecto a los pesos y sesgos de la red. Esto nos permite saber cómo ajustar los parámetros para reducir el error. La implementación de la retropropagación es más compleja y requiere calcular las derivadas parciales en cada capa.
+
+
+
 
 ### Optimizador
 El optimizador usa los gradientes calculados por la retropropagación para actualizar los pesos y sesgos de la red. Un optimizador simple es el Descenso de Gradiente Estocástico (SGD):

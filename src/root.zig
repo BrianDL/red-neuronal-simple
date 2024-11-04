@@ -13,34 +13,17 @@ const RedNeuronal = struct {
     allocator: std.mem.Allocator,
     strat_inicia_pesos: WeightInitStrategy,
 
-    pub fn init(
-        allocator: std.mem.Allocator,
-        configuracion: []const usize,
-        funciones_activacion: []const *const fn(f32) f32,
-        strat_inicia_pesos: WeightInitStrategy,
-        semilla: ?u64
-    ) !RedNeuronal {
+    pub fn init(allocator: std.mem.Allocator, configuracion: []const usize, funciones_activacion: []const *const fn (f32) f32, strat_inicia_pesos: WeightInitStrategy, semilla: ?u64) !RedNeuronal {
         const capas = try allocator.alloc(Capa, configuracion.len - 1);
         errdefer allocator.free(capas);
 
         for (capas, 0..) |*capa, i| {
-            capa.* = try Capa.init(
-                allocator,
-                configuracion[i + 1],
-                configuracion[i],
-                funciones_activacion[i],
-                strat_inicia_pesos,
-                if (semilla) |s| s +% i else null
-            );
+            capa.* = try Capa.init(allocator, configuracion[i + 1], configuracion[i], funciones_activacion[i], strat_inicia_pesos, if (semilla) |s| s +% i else null);
         }
 
-        return RedNeuronal{
-            .capas = capas,
-            .allocator = allocator,
-            .strat_inicia_pesos = strat_inicia_pesos
-        };
+        return RedNeuronal{ .capas = capas, .allocator = allocator, .strat_inicia_pesos = strat_inicia_pesos };
     }
-    
+
     pub fn deinit(self: *RedNeuronal) void {
         for (self.capas) |*capa| {
             capa.deinit();
@@ -48,11 +31,7 @@ const RedNeuronal = struct {
         self.allocator.free(self.capas);
     }
 
-    pub fn propagar_adelante(
-            self: *const RedNeuronal,
-            entradas: []const f32
-        ) ![]f32 {
-
+    pub fn propagar_adelante(self: *const RedNeuronal, entradas: []const f32) ![]f32 {
         var salida_actual = try self.allocator.dupe(f32, entradas);
         defer self.allocator.free(salida_actual);
 
@@ -69,9 +48,9 @@ const RedNeuronal = struct {
             std.debug.print("Layer {d}:\n", .{i + 1});
             for (capa.neuronas, 0..) |neurona, j| {
                 const suma = suma_ponderada(&neurona, salida_actual);
-                std.debug.print("  Neuron {d} sum: {d:.6}\n", .{j + 1, suma});
+                std.debug.print("  Neuron {d} sum: {d:.6}\n", .{ j + 1, suma });
                 salida_capa[j] = capa.funcion_activacion(suma);
-                std.debug.print("  Neuron {d} output: {d:.6}\n", .{j + 1, salida_capa[j]});
+                std.debug.print("  Neuron {d} output: {d:.6}\n", .{ j + 1, salida_capa[j] });
             }
 
             self.allocator.free(salida_actual);
@@ -97,7 +76,6 @@ const RedNeuronal = struct {
     }
 };
 
-
 // Weighted sum function
 fn suma_ponderada(neurona: *const Neurona, entradas: []const f32) f32 {
     if (entradas.len != neurona.pesos.len) {
@@ -111,14 +89,55 @@ fn suma_ponderada(neurona: *const Neurona, entradas: []const f32) f32 {
     return suma;
 }
 
+fn mse(predicciones: []const f32, objetivos: []const f32) f32 {
+    if (predicciones.len != objetivos.len) {
+        @panic("Las longitudes de predicciones y objetivos no coinciden");
+    }
+    var suma_errores: f32 = 0;
+    for (predicciones, objetivos) |pred, obj| {
+        const err = pred - obj;
+        suma_errores += err * err;
+    }
 
+    return suma_errores / @as(f32, @floatFromInt(predicciones.len));
+}
 
 ////////////// STARTS UNIT TESTING
 
+test "Mean Squared Error (MSE) calculation" {
+    const epsilon = 0.000001;
 
-test "Sigmoid function" {
-    const result = sigmoid(0);
-    try std.testing.expectApproxEqAbs(@as(f32, 0.5), result, 0.0001);
+    // Test case 1: Perfect prediction
+    {
+        const predicciones = [_]f32{ 1.0, 2.0, 3.0 };
+        const objetivos = [_]f32{ 1.0, 2.0, 3.0 };
+        const result = mse(&predicciones, &objetivos);
+        try std.testing.expectApproxEqAbs(@as(f32, 0.0), result, epsilon);
+    }
+
+    // Test case 2: Some error
+    {
+        const predicciones = [_]f32{ 1.0, 2.0, 3.0 };
+        const objetivos = [_]f32{ 1.1, 2.2, 2.8 };
+        const result = mse(&predicciones, &objetivos);
+        try std.testing.expectApproxEqAbs(@as(f32, 0.03), result, epsilon);
+    }
+
+    // Test case 3: Large error
+    {
+        const predicciones = [_]f32{ 0.0, 0.0, 0.0 };
+        const objetivos = [_]f32{ 1.0, 1.0, 1.0 };
+        const result = mse(&predicciones, &objetivos);
+        try std.testing.expectApproxEqAbs(@as(f32, 1.0), result, epsilon);
+    }
+
+    // Test case 4: Mixed positive and negative errors
+    {
+        const predicciones = [_]f32{ 0.5, 1.5, 2.5 };
+        const objetivos = [_]f32{ 1.0, 1.0, 3.0 };
+        const result = mse(&predicciones, &objetivos);
+        try std.testing.expectApproxEqAbs(@as(f32, 0.25), result, epsilon);
+    }
 }
 
 test "RedNeuronal initialization and forward propagation" {
@@ -130,12 +149,9 @@ test "RedNeuronal initialization and forward propagation" {
     const configuracion = [_]usize{ 2, 1 };
 
     // Only one activation function for the output layer
-    const funciones_activacion = [_]*const fn(f32) f32{sigmoid};
+    const funciones_activacion = [_]*const fn (f32) f32{sigmoid};
 
-    var red = try RedNeuronal.init(
-        allocator, &configuracion, &funciones_activacion
-        , WeightInitStrategy.Constant, null
-    );
+    var red = try RedNeuronal.init(allocator, &configuracion, &funciones_activacion, WeightInitStrategy.Constant, null);
     defer red.deinit();
 
     // Check the network structure
