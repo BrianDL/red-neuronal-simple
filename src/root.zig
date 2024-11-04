@@ -1,95 +1,12 @@
 const std = @import("std");
 const testing = std.testing;
 
-const Neurona = struct {
-    pesos: []f32,
-    sesgo: f32,
-    allocator: std.mem.Allocator,
+const Neurona = @import("neurona.zig").Neurona;
 
-    pub fn init(
-            allocator: std.mem.Allocator,
-            num_entradas: usize,
-            pesos: ?[]const f32,
-            sesgo: ?f32
-    ) !Neurona {
-        const new_pesos = try allocator.alloc(f32, num_entradas);
-        errdefer allocator.free(new_pesos);
-
-        if (pesos) |p| {
-            std.mem.copyForwards(f32, new_pesos, p);
-        } else {
-            @memset(new_pesos, 0.5);
-        }
-
-        return Neurona{
-            .pesos = new_pesos,
-            .sesgo = sesgo orelse 0,
-            .allocator = allocator,
-        };
-    }
-
-    pub fn deinit(self: *Neurona) void {
-        self.allocator.free(self.pesos);
-    }
-};
-
-// Capa (Layer) structure
-const Capa = struct {
-    neuronas: []Neurona,
-    funcion_activacion: *const fn (f32) f32,
-    allocator: std.mem.Allocator,
-    strat_inicia_pesos: WeightInitStrategy,
-
-    pub fn init(
-        allocator: std.mem.Allocator,
-        num_neuronas: usize,
-        num_entradas: usize,
-        funcion_activacion: *const fn (f32) f32,
-        strat_inicia_pesos: WeightInitStrategy,
-        seed: ?u64
-    ) !Capa {
-        const neuronas = try allocator.alloc(Neurona, num_neuronas);
-        errdefer allocator.free(neuronas);
-
-        var prng = std.rand.DefaultPrng.init(
-            seed orelse @intCast(std.time.milliTimestamp()));
-        
-        var rand = prng.random();
-
-        for (neuronas) |*neurona| {
-            neurona.* = try Neurona.init(allocator, num_entradas, null, 0);
-            
-            // Este bloque aplica la inicialización de pesos
-            switch (strat_inicia_pesos) {
-                .Constant => @memset(neurona.pesos, 0.5),
-                .UniformRandom => for (neurona.pesos) |*peso| {
-                    peso.* = rand.float(f32);
-                },
-                // .Xavier => {
-                //     const limit = @sqrt(6.0 / @floatFromInt(num_entradas + num_neuronas));
-                //     for (neurona.pesos) |*peso| {
-                //         peso.* = rand.float(f32) * 2 * limit - limit;
-                //     }
-                // },
-            }
-        }
-
-        return Capa{
-            .neuronas = neuronas,
-            .funcion_activacion = funcion_activacion,
-            .allocator = allocator,
-            .strat_inicia_pesos = strat_inicia_pesos,
-        };
-
-    }
-
-    pub fn deinit(self: *Capa) void {
-        for (self.neuronas) |*neurona| {
-            neurona.deinit();
-        }
-        self.allocator.free(self.neuronas);
-    }
-};
+const capa_module = @import("capa.zig");
+const Capa = capa_module.Capa;
+const sigmoid = capa_module.sigmoid;
+const WeightInitStrategy = capa_module.WeightInitStrategy;
 
 const RedNeuronal = struct {
     capas: []Capa,
@@ -180,11 +97,6 @@ const RedNeuronal = struct {
     }
 };
 
-const WeightInitStrategy = enum {
-    Constant,
-    UniformRandom,
-    // Xavier,
-};
 
 // Weighted sum function
 fn suma_ponderada(neurona: *const Neurona, entradas: []const f32) f32 {
@@ -199,97 +111,14 @@ fn suma_ponderada(neurona: *const Neurona, entradas: []const f32) f32 {
     return suma;
 }
 
-// Activation function: Sigmoid
-fn sigmoid(x: f32) f32 {
-    return 1.0 / (1.0 + std.math.exp(-x));
-}
 
 
 ////////////// STARTS UNIT TESTING
 
-test "Neurona initialization" {
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
-
-    var neurona = try Neurona.init(allocator, 3, null, 10);
-    defer neurona.deinit();
-
-    try std.testing.expectEqual(neurona.pesos.len, 3);
-    try std.testing.expectEqual(neurona.sesgo, 10);
-}
 
 test "Sigmoid function" {
     const result = sigmoid(0);
     try std.testing.expectApproxEqAbs(@as(f32, 0.5), result, 0.0001);
-}
-
-test "Capa initialization and deinitialization" {
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
-
-    const num_neuronas: usize = 2;
-    const num_entradas: usize = 3;
-
-    // Test Constant initialization
-    {
-        var capa = try Capa.init(
-            allocator,
-            num_neuronas,
-            num_entradas,
-            &sigmoid,
-            WeightInitStrategy.Constant,
-            null
-        );
-        defer capa.deinit();
-
-        try std.testing.expectEqual(capa.neuronas.len, num_neuronas);
-        try std.testing.expectEqual(capa.funcion_activacion, &sigmoid);
-        try std.testing.expectEqual(capa.strat_inicia_pesos, WeightInitStrategy.Constant);
-
-        for (capa.neuronas) |neurona| {
-            try std.testing.expectEqual(neurona.pesos.len, num_entradas);
-            try std.testing.expectEqual(neurona.sesgo, 0);
-
-            for (neurona.pesos) |peso| {
-                try std.testing.expectApproxEqAbs(@as(f32, 0.5), peso, 0.0001);
-            }
-        }
-    }
-
-    // Test UniformRandom initialization
-    {
-        var capa = try Capa.init(
-            allocator,
-            num_neuronas,
-            num_entradas,
-            &sigmoid,
-            WeightInitStrategy.UniformRandom,
-            1234  // Use a fixed seed for reproducibility
-        );
-        defer capa.deinit();
-
-        try std.testing.expectEqual(capa.neuronas.len, num_neuronas);
-        try std.testing.expectEqual(capa.funcion_activacion, &sigmoid);
-        try std.testing.expectEqual(capa.strat_inicia_pesos, WeightInitStrategy.UniformRandom);
-
-        for (capa.neuronas) |neurona| {
-            try std.testing.expectEqual(neurona.pesos.len, num_entradas);
-            try std.testing.expectEqual(neurona.sesgo, 0);
-
-            var all_same = true;
-            const first_weight = neurona.pesos[0];
-            for (neurona.pesos) |peso| {
-                if (peso != first_weight) {
-                    all_same = false;
-                    break;
-                }
-                try std.testing.expect(peso >= 0 and peso < 1);
-            }
-            try std.testing.expect(!all_same);
-        }
-    }
 }
 
 test "RedNeuronal initialization and forward propagation" {
