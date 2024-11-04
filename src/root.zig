@@ -95,7 +95,7 @@ const RedNeuronal = struct {
                     }
                 }
             }
-            std.debug.print("Época {}: Pérdida promedio = {d:.6}\n", .{ epoca + 1, perdida_total / @intToFloat(f32, entradas.len) });
+            std.debug.print("Época {}: Pérdida promedio = {d:.6}\n", .{ epoca + 1, perdida_total / @as(f32, @floatFromInt(entradas.len)) });
         }
     }
 };
