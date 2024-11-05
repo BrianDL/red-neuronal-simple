@@ -2,7 +2,7 @@ const std = @import("std");
 const log = std.log;
 const testing = std.testing;
 
-pub const log_level: log.Level = .err;
+// pub const log_level: log.Level = .err;
 
 const Neurona = @import("neurona.zig").Neurona;
 
@@ -12,7 +12,7 @@ const sigmoid = capa_module.sigmoid;
 const WeightInitStrategy = capa_module.WeightInitStrategy;
 const linear = capa_module.linear;
 
-const RedNeuronal = struct {
+pub const RedNeuronal = struct {
     capas: []Capa,
     allocator: std.mem.Allocator,
     strat_inicia_pesos: WeightInitStrategy,
@@ -39,35 +39,35 @@ const RedNeuronal = struct {
         var salida_actual = try self.allocator.dupe(f32, entradas);
         defer self.allocator.free(salida_actual);
 
-        log.debug("Input: {any}", .{salida_actual});
+        // log.debug("Input: {any}", .{salida_actual});
 
-        for (self.capas, 0..) |capa, i| {
+        for (self.capas) |capa| {
             var salida_capa = try self.allocator.alloc(f32, capa.neuronas.len);
             defer self.allocator.free(salida_capa);
 
-            log.debug("Layer {d}:", .{i + 1});
+            // log.debug("Layer {d}:", .{i + 1});
             for (capa.neuronas, 0..) |neurona, j| {
                 const suma = suma_ponderada(&neurona, salida_actual);
-                log.debug("  Neuron {d} sum: {d:.6}", .{ j + 1, suma });
+                // log.debug("  Neuron {d} sum: {d:.6}", .{ j + 1, suma });
                 salida_capa[j] = capa.funcion_activacion(suma);
-                log.debug("  Neuron {d} output: {d:.6}", .{ j + 1, salida_capa[j] });
+                // log.debug("  Neuron {d} output: {d:.6}", .{ j + 1, salida_capa[j] });
             }
 
             self.allocator.free(salida_actual);
             salida_actual = try self.allocator.dupe(f32, salida_capa);
 
-            log.debug("Layer {d} output: {any}", .{ i + 1, salida_actual });
+            // log.debug("Layer {d} output: {any}", .{ i + 1, salida_actual });
         }
 
         // Create a new slice for the final output
         const final_output = try self.allocator.dupe(f32, salida_actual);
-        log.debug("Final output: {any}", .{final_output});
+        // log.debug("Final output: {any}", .{final_output});
 
         return final_output;
     }
 
     pub fn entrenar_simple(self: *RedNeuronal, entradas: []const []const f32, objetivos: []const []const f32, epocas: usize, tasa_aprendizaje: f32) !void {
-        for (0..epocas) |epoca| {
+        for (0..epocas) |_| {
             var perdida_total: f32 = 0;
             for (entradas, objetivos) |entrada, objetivo| {
                 const prediccion = try self.propagar_adelante(entrada);
@@ -86,7 +86,7 @@ const RedNeuronal = struct {
                     }
                 }
             }
-            std.debug.print("Época {}: Pérdida promedio = {d:.6}\n", .{ epoca + 1, perdida_total / @as(f32, @floatFromInt(entradas.len)) });
+            // log.debug("Época {}: Pérdida promedio = {d:.6}\n", .{ epoca + 1, perdida_total / @as(f32, @floatFromInt(entradas.len)) });
         }
     }
 };
@@ -173,19 +173,19 @@ test "RedNeuronal initialization and forward propagation" {
     try std.testing.expectEqual(red.capas.len, 1);
     try std.testing.expectEqual(red.capas[0].neuronas.len, 1);
 
-    // Print weights and biases
-    std.debug.print("Weights: ", .{});
-    for (red.capas[0].neuronas[0].pesos) |peso| {
-        std.debug.print("{d:.6} ", .{peso});
-    }
-    std.debug.print("\nBias: {d:.6}\n", .{red.capas[0].neuronas[0].sesgo});
+    // // Log weights and biases
+    // // log.debug("Weights: ", .{});
+    // for (red.capas[0].neuronas[0].pesos) |peso| {
+    //     // log.debug("{d:.6} ", .{peso});
+    // }
+    // // log.debug("Bias: {d:.6}", .{red.capas[0].neuronas[0].sesgo});
 
     // Test forward propagation
     const entradas = [_]f32{ 0.5, 0.8 };
     const salida = try red.propagar_adelante(&entradas);
     defer allocator.free(salida);
 
-    std.debug.print("Final Output: {d:.6}\n", .{salida[0]});
+    // log.debug("Final Output: {d:.6}", .{salida[0]});
 
     // Check the output
     try std.testing.expectEqual(salida.len, 1);
@@ -236,15 +236,15 @@ test "Simple training of RedNeuronal - Linear Regression" {
         &objetivos_raw[4],
     };
 
-    // Debug print entradas and objetivos
-    std.debug.print("Entradas:\n", .{});
-    for (entradas) |entrada| {
-        std.debug.print("{any}\n", .{entrada});
-    }
-    std.debug.print("\nObjetivos:\n", .{});
-    for (objetivos) |objetivo| {
-        std.debug.print("{any}\n", .{objetivo});
-    }
+    // // Debug log entradas and objetivos
+    // // log.debug("Entradas:", .{});
+    // for (entradas) |entrada| {
+    //     // log.debug("{any}", .{entrada});
+    // }
+    // // log.debug("Objetivos:", .{});
+    // for (objetivos) |objetivo| {
+    //     // log.debug("{any}", .{objetivo});
+    // }
 
     try red.entrenar_simple(entradas, objetivos, 100, 0.1);
 
@@ -252,7 +252,7 @@ test "Simple training of RedNeuronal - Linear Regression" {
     for (entradas_raw, objetivos_raw) |entrada, objetivo| {
         const salida = try red.propagar_adelante(&entrada);
         defer allocator.free(salida);
-        std.debug.print("Input: {d:.1}, Output: {d:.4}, Target: {d:.1}\n", .{ entrada[0], salida[0], objetivo[0] });
+        // log.debug("Input: {d:.1}, Output: {d:.4}, Target: {d:.1}", .{ entrada[0], salida[0], objetivo[0] });
         try std.testing.expectApproxEqAbs(objetivo[0], salida[0], 0.5);
     }
 }
