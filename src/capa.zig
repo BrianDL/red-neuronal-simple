@@ -9,7 +9,15 @@ pub const Capa = struct {
     allocator: std.mem.Allocator,
     strat_inicia_pesos: WeightInitStrategy,
 
-    pub fn init(allocator: std.mem.Allocator, num_neuronas: usize, num_entradas: usize, funcion_activacion: *const fn (f32) f32, strat_inicia_pesos: WeightInitStrategy, seed: ?u64) !Capa {
+    pub fn init(
+            allocator: std.mem.Allocator
+            , num_neuronas: usize
+            , num_entradas: usize
+            , funcion_activacion: *const fn (f32) f32
+            , strat_inicia_pesos: WeightInitStrategy
+            , seed: ?u64
+        ) !Capa {
+            
         const neuronas = try allocator.alloc(Neurona, num_neuronas);
         errdefer allocator.free(neuronas);
 

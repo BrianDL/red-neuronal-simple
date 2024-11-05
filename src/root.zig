@@ -17,12 +17,24 @@ pub const RedNeuronal = struct {
     allocator: std.mem.Allocator,
     strat_inicia_pesos: WeightInitStrategy,
 
-    pub fn init(allocator: std.mem.Allocator, configuracion: []const usize, funciones_activacion: []const *const fn (f32) f32, strat_inicia_pesos: WeightInitStrategy, semilla: ?u64) !RedNeuronal {
+    pub fn init(allocator: std.mem.Allocator
+            , configuracion: []const usize
+            , funciones_activacion: []const *const fn (f32) f32
+            , strat_inicia_pesos: WeightInitStrategy
+            , semilla: ?u64
+        ) !RedNeuronal {
+
         const capas = try allocator.alloc(Capa, configuracion.len - 1);
         errdefer allocator.free(capas);
 
         for (capas, 0..) |*capa, i| {
-            capa.* = try Capa.init(allocator, configuracion[i + 1], configuracion[i], funciones_activacion[i], strat_inicia_pesos, if (semilla) |s| s +% i else null);
+            capa.* = try Capa.init(
+                allocator
+                , configuracion[i + 1]
+                , configuracion[i]
+                , funciones_activacion[i]
+                , strat_inicia_pesos
+                , if (semilla) |s| s +% i else null);
         }
 
         return RedNeuronal{ .capas = capas, .allocator = allocator, .strat_inicia_pesos = strat_inicia_pesos };
@@ -66,7 +78,13 @@ pub const RedNeuronal = struct {
         return final_output;
     }
 
-    pub fn entrenar_simple(self: *RedNeuronal, entradas: []const []const f32, objetivos: []const []const f32, epocas: usize, tasa_aprendizaje: f32) !void {
+    pub fn entrenar_simple(self: *RedNeuronal
+            , entradas: []const []const f32
+            , objetivos: []const []const f32
+            , epocas: usize
+            , tasa_aprendizaje: f32
+        ) !void {
+        
         for (0..epocas) |_| {
             var perdida_total: f32 = 0;
             for (entradas, objetivos) |entrada, objetivo| {

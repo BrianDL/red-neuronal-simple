@@ -8,7 +8,7 @@ const WeightInitStrategy = capa_module.WeightInitStrategy;
 const linear = capa_module.linear;
 
 const log = std.log;
-pub const log_level: log.Level = .err;
+pub const log_level: log.Level = .info;
 
 pub fn main() !void {
     // Inicializar el asignador de memoria
@@ -40,21 +40,31 @@ pub fn main() !void {
         .{9}, // 2*4 + 1
     };
 
-    // Crear slices para entradas y objetivos usando loops
-    var entradas: [entradas_raw.len][]const f32 = undefined;
-    var objetivos: [objetivos_raw.len][]const f32 = undefined;
+    // Crear slices para entradas y objetivos de manera dinámica
+    var entradas_slice = try allocator.alloc([]const f32, entradas_raw.len);
+    defer allocator.free(entradas_slice);
+
+    var objetivos_slice = try allocator.alloc([]const f32, objetivos_raw.len);
+    defer allocator.free(objetivos_slice);
 
     for (entradas_raw, 0..) |entrada, i| {
-        entradas[i] = &entrada;
+        entradas_slice[i] = &entrada;
     }
 
     for (objetivos_raw, 0..) |objetivo, i| {
-        objetivos[i] = &objetivo;
+        objetivos_slice[i] = &objetivo;
     }
 
-    // Convertir los arrays en slices constantes
-    const entradas_slice: []const []const f32 = &entradas;
-    const objetivos_slice: []const []const f32 = &objetivos;
+    // Imprimir los contenidos de entradas_slice y objetivos_slice
+    log.info("Contenido de entradas_slice:", .{});
+    for (entradas_slice, 0..) |entrada, i| {
+        log.info("  Entrada {d}: {d}", .{ i, entrada[0] });
+    }
+
+    log.info("Contenido de objetivos_slice:", .{});
+    for (objetivos_slice, 0..) |objetivo, i| {
+        log.info("  Objetivo {d}: {d}", .{ i, objetivo[0] });
+    }
 
     // Entrenar la red
     log.info("Entrenando la red...", .{});
