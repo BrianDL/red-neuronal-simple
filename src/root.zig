@@ -10,6 +10,7 @@ const capa_module = @import("capa.zig");
 const Capa = capa_module.Capa;
 const sigmoid = capa_module.sigmoid;
 const WeightInitStrategy = capa_module.WeightInitStrategy;
+const linear = capa_module.linear;
 
 const RedNeuronal = struct {
     capas: []Capa,
@@ -192,62 +193,66 @@ test "RedNeuronal initialization and forward propagation" {
     try std.testing.expectApproxEqAbs(@as(f32, 0.657010), salida[0], 0.000001);
 }
 
-// test "Simple training of RedNeuronal" {
-//     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-//     defer arena.deinit();
-//     const allocator = arena.allocator();
+test "Simple training of RedNeuronal - Linear Regression" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
-//     const configuracion = [_]usize{ 2, 2, 1 }; // Added a hidden layer
-//     const funciones_activacion = [_]*const fn (f32) f32{ sigmoid, sigmoid };
+    const configuracion = [_]usize{ 1, 1 }; // 1 input, 1 output
+    const funciones_activacion = [_]*const fn (f32) f32{linear};
 
-//     var red = try RedNeuronal.init(allocator, &configuracion, &funciones_activacion, WeightInitStrategy.UniformRandom, null);
-//     defer red.deinit();
+    var red = try RedNeuronal.init(allocator, &configuracion, &funciones_activacion, WeightInitStrategy.UniformRandom, null);
+    defer red.deinit();
 
-//     const entradas_raw = [_][2]f32{
-//         .{ 0, 0 },
-//         .{ 0, 1 },
-//         .{ 1, 0 },
-//         .{ 1, 1 },
-//     };
-//     const objetivos_raw = [_][1]f32{
-//         .{0},
-//         .{1},
-//         .{1},
-//         .{0},
-//     };
+    const entradas_raw = [_][1]f32{
+        .{0},
+        .{1},
+        .{2},
+        .{3},
+        .{4},
+    };
+    const objetivos_raw = [_][1]f32{
+        .{1}, // 2*0 + 1
+        .{3}, // 2*1 + 1
+        .{5}, // 2*2 + 1
+        .{7}, // 2*3 + 1
+        .{9}, // 2*4 + 1
+    };
 
-//     // Create slices directly
-//     const entradas: []const []const f32 = &[_][]const f32{
-//         &entradas_raw[0],
-//         &entradas_raw[1],
-//         &entradas_raw[2],
-//         &entradas_raw[3],
-//     };
+    // Create slices directly
+    const entradas: []const []const f32 = &[_][]const f32{
+        &entradas_raw[0],
+        &entradas_raw[1],
+        &entradas_raw[2],
+        &entradas_raw[3],
+        &entradas_raw[4],
+    };
 
-//     const objetivos: []const []const f32 = &[_][]const f32{
-//         &objetivos_raw[0],
-//         &objetivos_raw[1],
-//         &objetivos_raw[2],
-//         &objetivos_raw[3],
-//     };
+    const objetivos: []const []const f32 = &[_][]const f32{
+        &objetivos_raw[0],
+        &objetivos_raw[1],
+        &objetivos_raw[2],
+        &objetivos_raw[3],
+        &objetivos_raw[4],
+    };
 
-//     // Debug print entradas and objetivos
-//     std.debug.print("Entradas:\n", .{});
-//     for (entradas) |entrada| {
-//         std.debug.print("{any}\n", .{entrada});
-//     }
-//     std.debug.print("\nObjetivos:\n", .{});
-//     for (objetivos) |objetivo| {
-//         std.debug.print("{any}\n", .{objetivo});
-//     }
+    // Debug print entradas and objetivos
+    std.debug.print("Entradas:\n", .{});
+    for (entradas) |entrada| {
+        std.debug.print("{any}\n", .{entrada});
+    }
+    std.debug.print("\nObjetivos:\n", .{});
+    for (objetivos) |objetivo| {
+        std.debug.print("{any}\n", .{objetivo});
+    }
 
-//     try red.entrenar_simple(entradas, objetivos, 10000000, 0.1);
+    try red.entrenar_simple(entradas, objetivos, 100, 0.1);
 
-//     // Test the trained network
-//     for (entradas_raw, objetivos_raw) |entrada, objetivo| {
-//         const salida = try red.propagar_adelante(&entrada);
-//         defer allocator.free(salida);
-//         std.debug.print("Input: {d:.0} XOR {d:.0}, Output: {d:.4}, Target: {d:.0}\n", .{ entrada[0], entrada[1], salida[0], objetivo[0] });
-//         try std.testing.expectApproxEqAbs(objetivo[0], salida[0], 0.2);
-//     }
-// }
+    // Test the trained network
+    for (entradas_raw, objetivos_raw) |entrada, objetivo| {
+        const salida = try red.propagar_adelante(&entrada);
+        defer allocator.free(salida);
+        std.debug.print("Input: {d:.1}, Output: {d:.4}, Target: {d:.1}\n", .{ entrada[0], salida[0], objetivo[0] });
+        try std.testing.expectApproxEqAbs(objetivo[0], salida[0], 0.5);
+    }
+}
