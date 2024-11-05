@@ -6,3 +6,7 @@ zig-out/
 docs/report/*.aux
 docs/report/*.log
 docs/report/*.pdf
+*.aux
+*.log
+*.out
+*.pdf
