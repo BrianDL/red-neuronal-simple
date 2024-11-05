@@ -24,36 +24,22 @@ pub fn main() !void {
     var red = try RedNeuronal.init(allocator, &configuracion, &funciones_activacion, WeightInitStrategy.UniformRandom, null);
     defer red.deinit();
 
-    // Datos de entrenamiento: y = 2x + 1
-    const entradas_raw = [_][1]f32{
-        .{0},
-        .{1},
-        .{2},
-        .{3},
-        .{4},
-    };
-    const objetivos_raw = [_][1]f32{
-        .{1}, // 2*0 + 1
-        .{3}, // 2*1 + 1
-        .{5}, // 2*2 + 1
-        .{7}, // 2*3 + 1
-        .{9}, // 2*4 + 1
+    // Datos de entrenamiento: y = 3x -10
+    const entradas_slice = &[_][]const f32{
+        &[_]f32{0},
+        &[_]f32{1},
+        &[_]f32{2},
+        &[_]f32{3},
+        &[_]f32{4},
     };
 
-    // Crear slices para entradas y objetivos de manera dinámica
-    var entradas_slice = try allocator.alloc([]const f32, entradas_raw.len);
-    defer allocator.free(entradas_slice);
-
-    var objetivos_slice = try allocator.alloc([]const f32, objetivos_raw.len);
-    defer allocator.free(objetivos_slice);
-
-    for (entradas_raw, 0..) |entrada, i| {
-        entradas_slice[i] = &entrada;
-    }
-
-    for (objetivos_raw, 0..) |objetivo, i| {
-        objetivos_slice[i] = &objetivo;
-    }
+    const objetivos_slice = &[_][]const f32{
+        &[_]f32{-10}, // 3*0 -10
+        &[_]f32{-7}, // 2*1 + 1
+        &[_]f32{-4}, // 2*2 + 1
+        &[_]f32{-1}, // 2*3 + 1
+        &[_]f32{2}, // 2*4 + 1
+    };
 
     // Imprimir los contenidos de entradas_slice y objetivos_slice
     log.info("Contenido de entradas_slice:", .{});
@@ -72,8 +58,8 @@ pub fn main() !void {
 
     // Probar la red entrenada
     std.debug.print("\nProbando la red entrenada:\n", .{});
-    for (entradas_raw, objetivos_raw) |entrada, objetivo| {
-        const salida = try red.propagar_adelante(&entrada);
+    for (entradas_slice, objetivos_slice) |entrada, objetivo| {
+        const salida = try red.propagar_adelante(entrada);
         defer allocator.free(salida);
         std.debug.print("Entrada: {d:.1}, Salida: {d:.4}, Objetivo: {d:.1}\n", .{ entrada[0], salida[0], objetivo[0] });
     }
