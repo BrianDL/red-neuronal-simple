@@ -30,8 +30,8 @@
 
 
 \title{Implementando una Red Neuronal Desde Cero}
-\author{Tu Nombre}
-\date{}
+\author{Brian David Leiva - ECFM, USAC.}
+\date{Noviembre, 2024}
 
 \begin{document}
 
@@ -42,36 +42,40 @@ Describimos la implementación de una red neuronal simple desde cero utilizando 
 \end{abstract}
 
 \section{Introducción}
-Las redes neuronales son modelos computacionales inspirados en el funcionamiento del cerebro humano. Estas estructuras de procesamiento de información están diseñadas para reconocer patrones, aprender de los datos y realizar tareas complejas como clasificación, regresión y toma de decisiones.
+Las redes neuronales son modelos computacionales inspirados en el funcionamiento de las neuronas biológicas. Estas estructuras de procesamiento de información están diseñadas para reconocer patrones, aprender de los datos y realizar tareas complejas como clasificación, regresión y toma de decisiones.
 
-Una red neuronal típica consta de múltiples capas de unidades de procesamiento interconectadas llamadas neuronas artificiales. Cada neurona recibe entradas, las procesa y produce una salida. La estructura básica de una red neuronal incluye:
+Una red neuronal típica consta de múltiples capas de unidades de procesamiento interconectadas llamadas neuronas artificiales. Cada neurona recibe entradas, las procesa y produce una salida.
 
-\begin{itemize}
-    \item \textbf{Capa de entrada:} Recibe los datos iniciales.
-    \item \textbf{Capas ocultas:} Procesan la información, extrayendo y transformando características.
-    \item \textbf{Capa de salida:} Produce el resultado final de la red.
-\end{itemize}
+El funcionamiento de una sola neurona se puede describir en dos pasos principales. Primero, la neurona calcula la entrada ponderada. Cada neurona recibe múltiples entradas ($x_1, x_2, ..., x_n$), y cada entrada está asociada con un peso correspondiente ($w_1, w_2, ..., w_n$). La neurona calcula la suma ponderada de estas entradas, también conocida como "suma ponderada" o "weighted sum":
 
-Un componente importante en el funcionamiento de las neuronas artificiales es la función de activación. Estas funciones introducen no linealidades en el modelo, permitiendo que la red aprenda y represente relaciones complejas en los datos. Algunas funciones de activación comunes incluyen la función sigmoide, la tangente hiperbólica (tanh) y la unidad lineal rectificada (ReLU). La elección de la función de activación puede tener un impacto significativo en el rendimiento y la capacidad de aprendizaje de la red.
-El funcionamiento de una red neuronal se basa en dos procesos principales:
+\[
+z = \sum_{i=1}^n w_i x_i + b
+\]
 
-\begin{enumerate}
-    \item \textbf{Propagación hacia adelante:} Los datos fluyen desde la capa de entrada, a través de las capas ocultas, hasta la capa de salida. En cada neurona, se calcula una suma ponderada de sus entradas, que luego se pasa por una función de activación para producir su salida.
+Donde $z$ es la suma ponderada, $w_i$ son los pesos, $x_i$ son las entradas, $n$ es el número de entradas, y $b$ es el sesgo (bias) de la neurona, que permite ajustar el umbral de activación. Esta expresión matemática representa cómo la neurona combina sus entradas para producir un valor único.
 
-    \item \textbf{Retropropagación y aprendizaje:} La red ajusta sus pesos internos para minimizar la diferencia entre sus predicciones y los resultados deseados. Este proceso de aprendizaje permite a la red mejorar su rendimiento con el tiempo.
-\end{enumerate}
+En el segundo paso, la suma ponderada $z$ se pasa a través de una función de activación $f$, que introduce no linealidad en el modelo: 
 
-Este proyecto tiene como objetivo implementar la red neuronal más simple posible desde cero, utilizando el lenguaje de programación Zig. Nos enfocaremos en construir los componentes fundamentales: neuronas, capas, y los mecanismos de propagación hacia adelante y entrenamiento básico. Esta implementación nos permitirá comprender en profundidad cómo funcionan las redes neuronales a nivel fundamental.
+\[y = f(z)\]
 
-Aunque nuestra implementación será básica, sentará las bases para entender conceptos más avanzados en el campo del aprendizaje profundo, como redes más complejas, algoritmos de optimización sofisticados y arquitecturas especializadas para tareas específicas.
+donde $y$ es la salida final de la neurona. La función de activación $f$ puede tomar varias formas, dependiendo de los requisitos específicos del problema. Algunas funciones de activación comunes incluyen la función sigmoide ($f(z) = \frac{1}{1 + e^{-z}}$), la tangente hiperbólica (tanh, $f(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}$), y la ReLU (Rectified Linear Unit, $f(z) = \max(0, z)$).
+
+Este proceso de combinación de entradas ponderadas seguido por una función de activación permite a la neurona aprender y representar relaciones complejas en los datos. Cuando se conectan múltiples neuronas en capas, formando una red neuronal, esta capacidad se amplifica, permitiendo al modelo capturar patrones y relaciones aún más complejas en los datos de entrada.
+
+La estructura básica de una red neuronal incluye una capa de entrada que recibe los datos iniciales, capas ocultas que procesan la información extrayendo y transformando características, y una capa de salida que produce el resultado final de la red. El funcionamiento de una red neuronal se basa en dos procesos principales: la propagación hacia adelante, donde los datos fluyen desde la capa de entrada, a través de las capas ocultas, hasta la capa de salida; y la retropropagación y aprendizaje, donde la red ajusta sus pesos internos para minimizar la diferencia entre sus predicciones y los resultados deseados.
+
+
+En este proyecto tenemos como objetivo implementar la red neuronal más simple posible desde cero, utilizando el lenguaje de programación Zig. Nos enfocaremos en construir los componentes fundamentales: neuronas, capas, y los mecanismos de propagación hacia adelante y entrenamiento básico. Esta implementación nos permitirá comprender en profundidad cómo funcionan las redes neuronales a nivel fundamental.
+
+Nuestra implementación será básica pero sentará las bases para entender conceptos más avanzados en el campo del aprendizaje profundo, como redes más complejas, algoritmos de optimización sofisticados y arquitecturas especializadas para tareas específicas.
 
 \section{Metodología}
-\subsection{Lenguaje de Programación}
+\subsection*{Lenguaje de Programación}
 Elegimos Zig como lenguaje de programación para este proyecto debido a su enfoque en el rendimiento, la seguridad de la memoria y la simplicidad. Zig proporciona un control de bajo nivel similar a C, pero con características modernas que facilitan el desarrollo de sistemas complejos.
 
-\subsection{Implementación}
+\subsection*{Implementación}
 
-\subsubsection{Estructura de Neurona}
+\subsubsection*{Estructura de Neurona}
 Se implementó una estructura \texttt{Neurona} que contiene pesos, sesgo y un allocator para la gestión de memoria:
 
 \begin{lstlisting}[style=customcode]
@@ -82,7 +86,7 @@ const Neurona = struct {
 };
 \end{lstlisting}
 
-\subsubsection{Estructura de Capa}
+\subsubsection*{Estructura de Capa}
 La estructura \texttt{Capa} representa una colección de neuronas y define la función de activación para todas las neuronas en esa capa:
 
 \begin{lstlisting}[style=customcode]
@@ -96,13 +100,12 @@ const Capa = struct {
 Es importante notar que la función de activación se define a nivel de capa, no a nivel de neurona individual. Esta decisión de diseño se alinea con la práctica común en el campo de las redes neuronales, donde es habitual referirse a una capa por la función de activación que utiliza (por ejemplo, "capa ReLU" o "capa sigmoide"). Esta aproximación ofrece varias ventajas: simplifica la definición y manipulación de la arquitectura de la red, permite optimizaciones al aplicar la misma función de activación a todas las neuronas de una capa, y refleja cómo se conciben y discuten las arquitecturas de redes neuronales en la literatura y la práctica. Además, esta estructura de capa nos proporciona una gran flexibilidad en el diseño de la red, permitiendo utilizar diferentes funciones de activación para diferentes capas si así lo requerimos, lo cual es necesario para crear arquitecturas de redes neuronales más complejas y especializadas.
 
 
-\subsubsection{Estructura de Red Neuronal}
+\subsubsection*{Estructura de Red Neuronal}
 La estructura \texttt{RedNeuronal} representa la red completa, compuesta por capas:
 
 \begin{lstlisting}[style=customcode]
 pub const RedNeuronal = struct {
     capas: []Capa,
-    allocator: std.mem.Allocator,
     strat_inicia_pesos: WeightInitStrategy,
 
     pub fn init(allocator: std.mem.Allocator,
@@ -111,8 +114,6 @@ pub const RedNeuronal = struct {
                 strat_inicia_pesos: WeightInitStrategy,
                 semilla: ?u64) !RedNeuronal {
     }
-
-    pub fn deinit(self: *RedNeuronal) void {}
 };
 \end{lstlisting}
 
@@ -138,7 +139,7 @@ El parámetro \texttt{semilla} permite la reproducibilidad de los experimentos c
 
 Esta estructura proporciona una interfaz completa para la creación y uso de redes neuronales simples, con métodos para inicializar la red, propagar las entradas hacia adelante, y realizar el entrenamiento.
 
-\subsubsection{Propagación Hacia Adelante}
+\subsubsection*{Propagación Hacia Adelante}
 Se implementó la propagación hacia adelante como un método de la estructura \texttt{RedNeuronal} para calcular la salida de la red:
 
 \begin{lstlisting}[style=customcode]
@@ -148,14 +149,20 @@ pub fn propagar_adelante(self: *const RedNeuronal, entradas: []const f32) ![]f32
 
 Este método toma las entradas, las procesa a través de cada capa de la red, y devuelve la salida final.
 
-\subsubsection{Entrenamiento Simplificado}
+\subsubsection*{Entrenamiento Simplificado}
 Desarrollamos un método de entrenamiento básico sin retropropagación compleja. Este enfoque simplificado ajusta los pesos y sesgos de la red basándose en la diferencia entre la salida predicha y la salida deseada. El proceso de entrenamiento sigue estos pasos:
 
 \begin{enumerate}
     \item \textbf{Propagación hacia adelante:} Para cada conjunto de entradas de entrenamiento, la red calcula su salida actual utilizando la función \texttt{propagar\_adelante}.
 
-    \item \textbf{Cálculo del error:} Se calcula la diferencia entre la salida predicha y la salida objetivo. Este error se utiliza para ajustar los pesos y sesgos.
-
+    \item \textbf{Cálculo del error:} Se calcula la diferencia entre la salida predicha y la salida objetivo utilizando el Error Cuadrático Medio (Mean Squared Error, MSE). El MSE es una métrica común en aprendizaje automático que mide el promedio de los errores al cuadrado. Se calcula como:
+    
+    \[
+    MSE = \frac{1}{n} \sum_{i=1}^n (Y_i - \hat{Y}_i)^2
+    \]
+    
+    Donde $n$ es el número de muestras, $Y_i$ es el valor real y $\hat{Y}_i$ es el valor predicho por la red. El MSE penaliza errores más grandes de manera más severa debido al término cuadrático, lo que lo hace útil para muchos problemas de regresión. Este error se utiliza para ajustar los pesos y sesgos de la red.
+    
     \item \textbf{Ajuste de pesos y sesgos:} Para cada neurona en cada capa, comenzando desde la capa de salida y moviéndose hacia atrás:
     \begin{itemize}
         \item Los pesos se ajustan en proporción al error, la entrada correspondiente y la tasa de aprendizaje.
@@ -184,28 +191,33 @@ Donde:
 Este método de entrenamiento permite a la red aprender patrones simples en los datos. Sin embargo, tiene limitaciones en comparación con métodos más avanzados como la retropropagación. Es menos eficiente para redes profundas con múltiples capas ocultas y puede tener dificultades para aprender relaciones no lineales complejas. Además, la convergencia tiende a ser más lenta y menos estable que con algoritmos más sofisticados. A pesar de estas limitaciones, este enfoque simplificado proporciona una base sólida para entender los principios fundamentales del entrenamiento de redes neuronales y puede ser efectivo para problemas simples o como punto de partida para implementaciones más avanzadas.
 
 \section{Resultados}
-Para utilizar la red neuronal implementada en \texttt{main.zig}, se deben seguir estos pasos:
-
-\begin{enumerate}
-    \item Definir la configuración de la red (número de capas y neuronas).
-    \item Crear un conjunto de datos de entrenamiento (entradas y objetivos).
-    \item Inicializar la red neuronal.
-    \item Llamar a la función \texttt{entrenar\_simple} con los parámetros adecuados.
-    \item Probar la red entrenada con nuevos datos.
-\end{enumerate}
-
-\section{Discusión}
-La implementación actual demuestra los conceptos básicos de una red neuronal, incluyendo la estructura de neuronas y capas, la propagación hacia adelante y un método de entrenamiento simple. Sin embargo, hay varias áreas de mejora:
+Hemos logrado implementar con éxito una red neuronal simple pero funcional en el lenguaje de programación Zig. Nuestros resultados principales son:
 
 \begin{itemize}
-    \item Implementar retropropagación completa para un entrenamiento más eficiente.
-    \item Añadir más funciones de activación además de la sigmoide.
-    \item Implementar técnicas de regularización para mejorar la generalización.
-    \item Optimizar el rendimiento utilizando operaciones vectoriales.
+    \item \textbf{Arquitectura básica:} Implementamos estructuras de datos para neuronas, capas y la red neuronal completa, permitiendo la creación de redes con múltiples capas y número variable de neuronas por capa.
+
+    \item \textbf{Propagación hacia adelante:} Desarrollamos un mecanismo de propagación hacia adelante que permite a la red procesar entradas y generar salidas.
+
+    \item \textbf{Entrenamiento simplificado:} Implementamos un método de entrenamiento básico que permite a la red ajustar sus pesos y sesgos para aprender patrones en los datos.
+
+    \item \textbf{Aprendizaje de funciones lineales:} Demostramos que nuestra red es capaz de aprender funciones lineales simples, validando así su funcionalidad básica.
+
+    \item \textbf{Flexibilidad en la inicialización:} Implementamos diferentes estrategias de inicialización de pesos, incluyendo inicialización constante y aleatoria uniforme.
+
+    \item \textbf{Gestión de memoria eficiente:} Utilizamos las capacidades de Zig para una gestión de memoria eficiente y segura en toda la implementación.
 \end{itemize}
 
-\section{Conclusiones}
-Este proyecto ha demostrado la viabilidad de implementar una red neuronal simple desde cero utilizando Zig. La implementación actual puede aprender funciones lineales simples y proporciona una base sólida para futuras extensiones y mejoras. El uso de Zig ha permitido un control preciso sobre la memoria y el rendimiento, lo que es crucial en aplicaciones de aprendizaje automático.
+Estos resultados demuestran que hemos logrado nuestro objetivo de implementar una red neuronal funcional desde cero en Zig. La red es capaz de realizar tareas básicas de aprendizaje automático, sirviendo como una base sólida para futuros desarrollos y mejoras.
+
+Sin embargo, es importante reconocer las áreas de mejora potencial:
+\begin{itemize}
+    \item Implementación de algoritmos de entrenamiento más avanzados, como la retropropagación completa.
+    \item Adición de más funciones de activación para manejar relaciones no lineales.
+    \item Incorporación de técnicas de regularización para mejorar la generalización.
+    \item Optimización del rendimiento, posiblemente mediante el uso de operaciones vectoriales.
+\end{itemize}
+
+Estas áreas de mejora representan direcciones interesantes para el desarrollo futuro de este proyecto.
 
 \begin{thebibliography}{9}
 \bibitem{goodfellow2016deep} 
@@ -217,6 +229,16 @@ MIT Press.
 Zig Software Foundation. (2023).
 \textit{Zig Programming Language Documentation}.
 \url{https://ziglang.org/documentation/master/}
+
+\bibitem{kinsley2020neural}
+Kinsley, H., \& Kukieła, D. (2020).
+\textit{Neural Networks from Scratch in Python}.
+Self-published.
+
+\bibitem{howard2020deep}
+Howard, J., \& Gugger, S. (2020).
+\textit{Deep Learning for Coders with fastai and PyTorch: AI Applications Without a PhD}.
+O'Reilly Media.
 \end{thebibliography}
 
 \end{document}
