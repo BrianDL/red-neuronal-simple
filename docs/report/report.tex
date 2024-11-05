@@ -1,0 +1,152 @@
+\documentclass[twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Define a custom listing style
+\lstdefinestyle{customcode}{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    commentstyle=\color{gray},
+    keywordstyle=\color{blue},
+    stringstyle=\color{green!50!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt,
+    tabsize=2,
+    showstringspaces=false
+}
+
+
+
+\title{Implementando una Red Neuronal Desde Cero}
+\author{Tu Nombre}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este reporte describe la implementación de una red neuronal simple desde cero utilizando el lenguaje de programación Zig. Se detallan los componentes fundamentales de la red, incluyendo la estructura de datos para neuronas y capas, la propagación hacia adelante, y un método de entrenamiento simplificado. El proyecto demuestra la capacidad de la red para aprender una función lineal simple.
+\end{abstract}
+
+\section{Introducción}
+Las redes neuronales son modelos computacionales inspirados en el funcionamiento del cerebro humano. Este proyecto tiene como objetivo implementar la red neuronal más simple posible desde cero, utilizando el lenguaje de programación Zig. El enfoque se centra en comprender los componentes fundamentales de una red neuronal y su funcionamiento básico.
+
+\section{Metodología}
+\subsection{Lenguaje de Programación}
+Se eligió Zig como lenguaje de programación para este proyecto debido a su enfoque en el rendimiento, la seguridad de la memoria y la simplicidad. Zig proporciona un control de bajo nivel similar a C, pero con características modernas que facilitan el desarrollo de sistemas complejos.
+
+\subsection{Implementación}
+La implementación se divide en varios componentes clave:
+
+\subsubsection{Estructura de Neurona}
+Se implementó una estructura \texttt{Neurona} que contiene pesos, sesgo y un allocator para la gestión de memoria:
+
+\begin{lstlisting}[style=customcode]
+const Neurona = struct {
+    pesos: []f32,
+    sesgo: f32,
+    allocator: *std.mem.Allocator,
+};
+\end{lstlisting}
+
+\subsubsection{Estructura de Capa}
+La estructura \texttt{Capa} representa una colección de neuronas:
+
+\begin{lstlisting}[style=customcode]
+const Capa = struct {
+    neuronas: []Neurona,
+    funcion_activacion: fn (f32) f32,
+    allocator: *std.mem.Allocator,
+};
+\end{lstlisting}
+
+\subsubsection{Estructura de Red Neuronal}
+La estructura \texttt{RedNeuronal} representa la red completa, compuesta por capas:
+
+\begin{lstlisting}[style=customcode]
+pub const RedNeuronal = struct {
+    capas: []Capa,
+    allocator: std.mem.Allocator,
+    strat_inicia_pesos: WeightInitStrategy,
+
+    pub fn init(allocator: std.mem.Allocator,
+                configuracion: []const usize,
+                funciones_activacion: []const *const fn (f32) f32,
+                strat_inicia_pesos: WeightInitStrategy,
+                semilla: ?u64) !RedNeuronal {
+    }
+
+    pub fn deinit(self: *RedNeuronal) void {}
+
+};
+\end{lstlisting}
+
+Esta estructura encapsula todas las capas de la red, gestiona la memoria a través de un allocator, y proporciona métodos para inicializar la red, propagar las entradas hacia adelante, y realizar el entrenamiento.
+
+\subsubsection{Propagación Hacia Adelante}
+Se implementó la propagación hacia adelante como un método de la estructura \texttt{RedNeuronal} para calcular la salida de la red:
+
+\begin{lstlisting}[style=customcode]
+pub fn propagar_adelante(self: *const RedNeuronal, entradas: []const f32) ![]f32 {
+}
+\end{lstlisting}
+
+Este método toma las entradas, las procesa a través de cada capa de la red, y devuelve la salida final.
+
+\subsubsection{Entrenamiento Simplificado}
+Se desarrolló un método de entrenamiento básico sin retropropagación compleja:
+
+\begin{lstlisting}[style=customcode]
+fn entrenar_simple(red: *RedNeuronal, entradas: []const []const f32, 
+                   objetivos: []const []const f32, epocas: usize, 
+                   tasa_aprendizaje: f32) !void {
+}
+\end{lstlisting}
+
+\section{Resultados}
+Para utilizar la red neuronal implementada en \texttt{main.zig}, se deben seguir estos pasos:
+
+\begin{enumerate}
+    \item Definir la configuración de la red (número de capas y neuronas).
+    \item Crear un conjunto de datos de entrenamiento (entradas y objetivos).
+    \item Inicializar la red neuronal.
+    \item Llamar a la función \texttt{entrenar\_simple} con los parámetros adecuados.
+    \item Probar la red entrenada con nuevos datos.
+\end{enumerate}
+
+\section{Discusión}
+La implementación actual demuestra los conceptos básicos de una red neuronal, incluyendo la estructura de neuronas y capas, la propagación hacia adelante y un método de entrenamiento simple. Sin embargo, hay varias áreas de mejora:
+
+\begin{itemize}
+    \item Implementar retropropagación completa para un entrenamiento más eficiente.
+    \item Añadir más funciones de activación además de la sigmoide.
+    \item Implementar técnicas de regularización para mejorar la generalización.
+    \item Optimizar el rendimiento utilizando operaciones vectoriales.
+\end{itemize}
+
+\section{Conclusiones}
+Este proyecto ha demostrado la viabilidad de implementar una red neuronal simple desde cero utilizando Zig. La implementación actual puede aprender funciones lineales simples y proporciona una base sólida para futuras extensiones y mejoras. El uso de Zig ha permitido un control preciso sobre la memoria y el rendimiento, lo que es crucial en aplicaciones de aprendizaje automático.
+
+\begin{thebibliography}{9}
+\bibitem{goodfellow2016deep} 
+Goodfellow, I., Bengio, Y., \& Courville, A. (2016). 
+\textit{Deep Learning}. 
+MIT Press.
+
+\bibitem{zigdoc}
+Zig Software Foundation. (2023).
+\textit{Zig Programming Language Documentation}.
+\url{https://ziglang.org/documentation/master/}
+\end{thebibliography}
+
+\end{document}
