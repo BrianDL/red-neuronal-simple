@@ -40,26 +40,25 @@ pub fn main() !void {
         .{9}, // 2*4 + 1
     };
 
-    // Crear slices para entradas y objetivos
-    const entradas: []const []const f32 = &[_][]const f32{
-        &entradas_raw[0],
-        &entradas_raw[1],
-        &entradas_raw[2],
-        &entradas_raw[3],
-        &entradas_raw[4],
-    };
+    // Crear slices para entradas y objetivos usando loops
+    var entradas: [entradas_raw.len][]const f32 = undefined;
+    var objetivos: [objetivos_raw.len][]const f32 = undefined;
 
-    const objetivos: []const []const f32 = &[_][]const f32{
-        &objetivos_raw[0],
-        &objetivos_raw[1],
-        &objetivos_raw[2],
-        &objetivos_raw[3],
-        &objetivos_raw[4],
-    };
+    for (entradas_raw, 0..) |entrada, i| {
+        entradas[i] = &entrada;
+    }
+
+    for (objetivos_raw, 0..) |objetivo, i| {
+        objetivos[i] = &objetivo;
+    }
+
+    // Convertir los arrays en slices constantes
+    const entradas_slice: []const []const f32 = &entradas;
+    const objetivos_slice: []const []const f32 = &objetivos;
 
     // Entrenar la red
-    std.debug.print("Entrenando la red...\n", .{});
-    try red.entrenar_simple(entradas, objetivos, 1000, 0.01);
+    log.info("Entrenando la red...", .{});
+    try red.entrenar_simple(entradas_slice, objetivos_slice, 1000, 0.01);
 
     // Probar la red entrenada
     std.debug.print("\nProbando la red entrenada:\n", .{});
